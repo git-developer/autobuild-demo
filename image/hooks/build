@@ -38,33 +38,39 @@ collect_dockerhub_metadata() {
 }
 
 collect_github_metadata() {
-    if lacks jq || lacks wget; then
-        apt-get -q update
-        apt-get -q install -y jq wget
-        if lacks jq || lacks wget; then
-            >&2 echo 'Ignoring GitHub metadata because of missing dependencies. Required: [jq, wget]'
-        fi
-    elif [ -n "${SOURCE_REPOSITORY_URL-}" ]; then
-        SOURCE_OWNER_URL="${SOURCE_REPOSITORY_URL%/*}"
-        SOURCE_OWNER_NAME="${SOURCE_OWNER_URL##*/}"
-        SOURCE_REPO_NAME="${SOURCE_REPOSITORY_URL##*/}"
-
-        github_metadata_url="https://api.github.com/repos/${SOURCE_OWNER_NAME}/${SOURCE_REPO_NAME}"
-        if wget -q --spider "${github_metadata_url}"; then
-            GITHUB_REPO_METADATA=$(wget -q -O - "${github_metadata_url}")
-
-            GITHUB_OWNER_URL="$(   value_of .owner.html_url)"
-            GITHUB_URL="$(         value_of .html_url)"
-            GITHUB_DESCRIPTION="$( value_of .description)"
-            GITHUB_LICENSE="$(     value_of .license.spdx_id)"
-
-            IMAGE_DESCRIPTION="${GITHUB_DESCRIPTION}"
-            IMAGE_URL="${GITHUB_URL}"
-            IMAGE_DOCUMENTATION="${IMAGE_URL:+${IMAGE_URL}#readme}"
-            IMAGE_LICENSES="${GITHUB_LICENSE}"
-            IMAGE_AUTHORS="${GITHUB_OWNER_URL}"
-        fi
+    if [ -z "${SOURCE_REPOSITORY_URL-}" ]; then
+        >&2 echo 'Skipping GitHub metadata because of missing URL to git repository.'
+        return 0
     fi
+    if lacks wget || lacks jq; then
+        apt-get -q update
+        apt-get -q install -y wget jq
+    fi
+    if lacks wget || lacks jq; then
+        >&2 echo 'Skipping GitHub metadata because of missing dependencies. Required: [wget, jq]'
+        return 0
+    fi
+    SOURCE_OWNER_URL="${SOURCE_REPOSITORY_URL%/*}"
+    SOURCE_OWNER_NAME="${SOURCE_OWNER_URL##*/}"
+    SOURCE_REPO_NAME="${SOURCE_REPOSITORY_URL##*/}"
+    github_metadata_url="https://api.github.com/repos/${SOURCE_OWNER_NAME}/${SOURCE_REPO_NAME}"
+    if ! wget -q --spider "${github_metadata_url}"; then
+        >&2 echo "No GitHub repository metadata was found at ${github_metadata_url}"
+        return 0
+    fi
+
+    GITHUB_REPO_METADATA=$(wget -q -O - "${github_metadata_url}")
+
+    GITHUB_OWNER_URL="$(   value_of .owner.html_url)"
+    GITHUB_URL="$(         value_of .html_url)"
+    GITHUB_DESCRIPTION="$( value_of .description)"
+    GITHUB_LICENSE="$(     value_of .license.spdx_id)"
+
+    IMAGE_DESCRIPTION="${GITHUB_DESCRIPTION}"
+    IMAGE_URL="${GITHUB_URL}"
+    IMAGE_DOCUMENTATION="${IMAGE_URL:+${IMAGE_URL}#readme}"
+    IMAGE_LICENSES="${GITHUB_LICENSE}"
+    IMAGE_AUTHORS="${GITHUB_OWNER_URL}"
 }
 
 start_build() {
