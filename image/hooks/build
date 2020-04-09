@@ -37,8 +37,6 @@ elif [ -n "${SOURCE_REPOSITORY_URL-}" ]; then
     fi
 fi
 
-env | sort && echo
-
 docker build \
     --file  "${DOCKERFILE_PATH}" \
     --tag   "${IMAGE_NAME}" \
