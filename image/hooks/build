@@ -1,6 +1,42 @@
 #!/bin/bash
 set -eu
 
+DOCKER_REPO_OWNER="${DOCKER_REPO%/*}"
+IMAGE_VENDOR="${DOCKER_REPO_OWNER##*/}"
+IMAGE_TITLE="${DOCKER_REPO##*/}"
+IMAGE_VERSION="${DOCKER_TAG}"
+IMAGE_REVISION="${SOURCE_COMMIT}"
+IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
+IMAGE_REF_NAME="${SOURCE_BRANCH}"
+
+if ! command -v jq >/dev/null || ! command -v wget >/dev/null; then
+    >&2 echo 'Ignoring GitHub metadata because of missing dependencies. Required: [jq, wget]'
+elif [ -n "${SOURCE_REPOSITORY_URL-}" ]; then
+    SOURCE_OWNER_URL="${SOURCE_REPOSITORY_URL%/*}"
+    SOURCE_OWNER_NAME="${SOURCE_OWNER_URL##*/}"
+    SOURCE_REPO_NAME="${SOURCE_REPOSITORY_URL##*/}"
+
+    github_metadata_url="https://api.github.com/repos/${SOURCE_OWNER_NAME}/${SOURCE_REPO_NAME}"
+    if wget -q --spider "${github_metadata_url}"; then
+        GITHUB_REPO_METADATA=$(wget -q -O - "${github_metadata_url}")
+
+        value_of() {
+            echo "${GITHUB_REPO_METADATA}" | jq -r "${1} // empty"
+        }
+
+        GITHUB_OWNER_URL="$(   value_of .owner.html_url)"
+        GITHUB_URL="$(         value_of .html_url)"
+        GITHUB_DESCRIPTION="$( value_of .description)"
+        GITHUB_LICENSE="$(     value_of .license.spdx_id)"
+
+        IMAGE_DESCRIPTION="${GITHUB_DESCRIPTION}"
+        IMAGE_URL="${GITHUB_URL}"
+        IMAGE_DOCUMENTATION="${IMAGE_URL:+${IMAGE_URL}#readme}"
+        IMAGE_LICENSES="${GITHUB_LICENSE}"
+        IMAGE_AUTHORS="${GITHUB_OWNER_URL}"
+    fi
+fi
+
 env | sort && echo
 
 docker build \
