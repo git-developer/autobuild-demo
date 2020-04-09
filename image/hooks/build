@@ -19,6 +19,11 @@
 #
 set -eu
 
+TARGET_PLATFORMS='linux/amd64,linux/arm64,linux/arm/v7'
+
+DOCKER_CLI_EXPERIMENTAL='enabled'
+DOCKER_BUILD_COMMAND="docker buildx build --platform ${TARGET_PLATFORMS}"
+
 collect_dockerhub_metadata() {
     local docker_repo_owner="${DOCKER_REPO%/*}"
     IMAGE_VENDOR="${docker_repo_owner##*/}"
@@ -65,7 +70,7 @@ collect_github_metadata() {
 
 start_build() {
     local oci='org.opencontainers.image'
-    docker build \
+    ${DOCKER_BUILD_COMMAND} \
     --file  "${DOCKERFILE_PATH}" \
     --tag   "${IMAGE_NAME}" \
     --label "${oci}.vendor=${IMAGE_VENDOR}" \
