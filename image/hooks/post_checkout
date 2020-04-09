@@ -1,3 +1,4 @@
+#!/usr/bin/env /bin/bash
 set -eua
 
 env | sort && echo
