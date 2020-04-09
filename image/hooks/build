@@ -1,5 +1,8 @@
 #!/bin/bash
 set -eu
+
+env | sort && echo
+
 docker build \
     --file  "${DOCKERFILE_PATH}" \
     --tag   "${IMAGE_NAME}" \

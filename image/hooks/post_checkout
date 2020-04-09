@@ -11,11 +11,9 @@ IMAGE_REVISION="${SOURCE_COMMIT}"
 IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
 IMAGE_REF_NAME="${SOURCE_BRANCH}"
 
-if ! command -v jq >/dev/null; then
-    apt-get install jq || true
-    if ! command -v jq >/dev/null; then
-        >&2 echo 'Ignoring GitHub metadata because of missing required dependency "jq".'
-    fi
+apt-get install -y jq wget || true
+if ! command -v jq >/dev/null || ! command -v wget >/dev/null; then
+    >&2 echo 'Ignoring GitHub metadata because of missing dependencies. Required: [jq, wget]'
 elif [ -n "${SOURCE_REPOSITORY_URL-}" ]; then
     SOURCE_OWNER_URL="${SOURCE_REPOSITORY_URL%/*}"
     SOURCE_OWNER_NAME="${SOURCE_OWNER_URL##*/}"
@@ -41,3 +39,5 @@ elif [ -n "${SOURCE_REPOSITORY_URL-}" ]; then
         IMAGE_AUTHORS="${GITHUB_OWNER_URL}"
     fi
 fi
+
+env | sort && echo
