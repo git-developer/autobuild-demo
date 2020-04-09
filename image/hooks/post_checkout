@@ -7,7 +7,8 @@ DOCKER_BUILDX_VERSION=v0.3.1
 DOCKER_CLI_EXPERIMENTAL='enabled'
 DOCKER_BUILD_COMMAND="docker buildx build --platform ${TARGET_PLATFORMS}"
 
-apt-get install -q -y qemu-user-static
+apt-get -q update
+apt-get -q install -y qemu-user-static
 docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 wget "https://github.com/docker/buildx/releases/download/${DOCKER_BUILDX_VERSION}/buildx-${DOCKER_BUILDX_VERSION}.linux-amd64"
 chmod +x "buildx-${DOCKER_BUILDX_VERSION}.linux-amd64"
