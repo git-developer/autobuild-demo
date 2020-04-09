@@ -71,9 +71,12 @@ collect_github_metadata() {
     IMAGE_DOCUMENTATION="${IMAGE_URL:+${IMAGE_URL}#readme}"
     IMAGE_LICENSES="${GITHUB_LICENSE}"
     IMAGE_AUTHORS="${GITHUB_OWNER_URL}"
+
+echo "A: IMAGE_LICENSES=${IMAGE_LICENSES}"
 }
 
 start_build() {
+echo "B: IMAGE_LICENSES=${IMAGE_LICENSES}"
     docker build \
     --file  "${DOCKERFILE_PATH}" \
     --tag   "${IMAGE_NAME}" \
