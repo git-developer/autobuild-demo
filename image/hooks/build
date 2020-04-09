@@ -1,12 +1,5 @@
-#!/usr/bin/env sh
 set -eu
-IMAGE_METADATA_FILE="${IMAGE_METADATA_FILE:-$(realpath $(dirname "${0}")/..)/.image-metadata}"
-if [ -r "${IMAGE_METADATA_FILE}" ]; then
-  >&2 echo "Using image metadata file '${IMAGE_METADATA_FILE}'"
-  . "${IMAGE_METADATA_FILE}"
-else
-  >&2 echo "Warning: Ignoring unreadable image metadata file '${IMAGE_METADATA_FILE}'"
-fi
+
 echo \
 docker build \
     --tag   "${IMAGE_VENDOR}/${IMAGE_TITLE}:${IMAGE_VERSION}" \

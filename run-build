@@ -1,5 +1,5 @@
-#!/usr/bin/env sh
-set -eua
+#!/usr/bin/env bash
+set -ea
 here="$(dirname "${0}")"
 
 SOURCE_BRANCH="${SOURCE_BRANCH:-$(2>/dev/null git rev-parse --abbrev-ref HEAD || true)}"
@@ -14,7 +14,7 @@ hooks="${here}/image/hooks"
 for hook in post_checkout pre_build build post_build pre_test test post_test pre_push push post_push; do
   file="${hooks}/${hook}"
   if [ -x "${file}" ]; then
-    "${file}"
+    . "${file}"
   else
     >&2 echo "Ignoring missing hook ${hook}"
   fi
