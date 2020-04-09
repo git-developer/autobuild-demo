@@ -3,8 +3,9 @@ set -eua
 
 env | sort && echo
 
-IMAGE_VENDOR="${IMAGE_VENDOR}"
-IMAGE_TITLE="${DOCKER_REPO}"
+DOCKER_REPO_OWNER="${DOCKER_REPO%/*}"
+IMAGE_VENDOR="${DOCKER_REPO_OWNER##*/}"
+IMAGE_TITLE="${DOCKER_REPO##*/}"
 IMAGE_VERSION="${DOCKER_TAG}"
 IMAGE_REVISION="${SOURCE_COMMIT}"
 IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
@@ -12,8 +13,12 @@ IMAGE_REF_NAME="${SOURCE_BRANCH}"
 
 if ! command -v jq >/dev/null; then
     >&2 echo 'Ignoring GitHub metadata because of missing required dependency "jq".'
-else
-    github_metadata_url="https://api.github.com/repos/${IMAGE_VENDOR}/${IMAGE_TITLE}"
+elif [ -n "${SOURCE_REPOSITORY_URL-}" ]; then
+    SOURCE_OWNER_URL="${SOURCE_REPOSITORY_URL%/*}"
+    SOURCE_OWNER_NAME="${SOURCE_OWNER_URL##*/}"
+    SOURCE_REPO_NAME="${SOURCE_REPOSITORY_URL##*/}"
+
+    github_metadata_url="https://api.github.com/repos/${SOURCE_OWNER_NAME}/${SOURCE_REPO_NAME}"
     if wget -q --spider "${github_metadata_url}"; then
         GITHUB_REPO_METADATA=$(wget -q -O - "${github_metadata_url}")
 
