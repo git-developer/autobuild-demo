@@ -1,6 +1,5 @@
 set -eu
 
-echo \
 docker build \
     --tag   "${IMAGE_NAME}" \
     --label "org.opencontainers.image.vendor=${IMAGE_VENDOR}" \
