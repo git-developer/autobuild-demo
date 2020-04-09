@@ -54,7 +54,7 @@ collect_github_metadata() {
         return 0
     fi
 
-    local github_repo_metadata=$(wget -q -O - "${github_metadata_url}")
+    local github_repo_metadata="$(wget -q -O - "${github_metadata_url}")"
     value_of() { echo "${github_repo_metadata}" | jq -r "${1} // empty"; }
     IMAGE_DESCRIPTION="$(value_of .description)"
     IMAGE_URL="$(value_of .html_url)"
@@ -64,20 +64,21 @@ collect_github_metadata() {
 }
 
 start_build() {
+    local oci='org.opencontainers.image'
     docker build \
     --file  "${DOCKERFILE_PATH}" \
     --tag   "${IMAGE_NAME}" \
-    --label "org.opencontainers.image.vendor=${IMAGE_VENDOR}" \
-    --label "org.opencontainers.image.title=${IMAGE_TITLE}" \
-    --label "org.opencontainers.image.version=${IMAGE_VERSION}" \
-    ${IMAGE_CREATED:+--label "org.opencontainers.image.created=${IMAGE_CREATED}"} \
-    ${IMAGE_AUTHORS:+--label "org.opencontainers.image.authors=${IMAGE_AUTHORS}"} \
-    ${IMAGE_URL:+--label "org.opencontainers.image.url=${IMAGE_URL}"} \
-    ${IMAGE_DOCUMENTATION:+--label "org.opencontainers.image.documentation=${IMAGE_DOCUMENTATION}"} \
-    ${IMAGE_REVISION:+--label "org.opencontainers.image.revision=${IMAGE_REVISION}"} \
-    ${IMAGE_LICENSES:+--label "org.opencontainers.image.licenses=${IMAGE_LICENSES}"} \
-    ${IMAGE_REF_NAME:+--label "org.opencontainers.image.ref.name=${IMAGE_REF_NAME}"} \
-    ${IMAGE_DESCRIPTION:+--label "org.opencontainers.image.description=${IMAGE_DESCRIPTION}"} \
+    --label "${oci}.vendor=${IMAGE_VENDOR}" \
+    --label "${oci}.title=${IMAGE_TITLE}" \
+    --label "${oci}.version=${IMAGE_VERSION}" \
+    ${IMAGE_CREATED:+--label "${oci}.created=${IMAGE_CREATED}"} \
+    ${IMAGE_AUTHORS:+--label "${oci}.authors=${IMAGE_AUTHORS}"} \
+    ${IMAGE_URL:+--label "${oci}.url=${IMAGE_URL}"} \
+    ${IMAGE_DOCUMENTATION:+--label "${oci}.documentation=${IMAGE_DOCUMENTATION}"} \
+    ${IMAGE_REVISION:+--label "${oci}.revision=${IMAGE_REVISION}"} \
+    ${IMAGE_LICENSES:+--label "${oci}.licenses=${IMAGE_LICENSES}"} \
+    ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"} \
+    ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"} \
     .
 }
 
