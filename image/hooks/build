@@ -2,7 +2,7 @@ set -eu
 
 echo \
 docker build \
-    --tag   "${IMAGE_VENDOR}/${IMAGE_TITLE}:${IMAGE_VERSION}" \
+    --tag   "${IMAGE_NAME}" \
     --label "org.opencontainers.image.vendor=${IMAGE_VENDOR}" \
     --label "org.opencontainers.image.title=${IMAGE_TITLE}" \
     --label "org.opencontainers.image.version=${IMAGE_VERSION}" \
@@ -14,4 +14,4 @@ docker build \
     ${IMAGE_LICENSES:+--label "org.opencontainers.image.licenses=${IMAGE_LICENSES}"} \
     ${IMAGE_REF_NAME:+--label "org.opencontainers.image.ref.name=${IMAGE_REF_NAME}"} \
     ${IMAGE_DESCRIPTION:+--label "org.opencontainers.image.description=${IMAGE_DESCRIPTION}"} \
-    "${@}"
+    "${DOCKERFILE_PATH}"

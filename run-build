@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-set -ea
+set -eua
 here="$(dirname "${0}")"
 
 SOURCE_BRANCH="${SOURCE_BRANCH:-$(2>/dev/null git rev-parse --abbrev-ref HEAD || true)}"
 SOURCE_COMMIT="${SOURCE_COMMIT:-$(2>/dev/null git rev-parse --short HEAD || true)}"
 COMMIT_MSG="${COMMIT_MSG:-Commit message}"
 DOCKER_REPO="${DOCKER_REPO:-$(basename $(realpath "${here}"))}"
-DOCKERFILE_PATH="${DOCKERFILE_PATH:-image/Dockerfile}"
+DOCKERFILE_PATH="${DOCKERFILE_PATH:-"${here}/image/Dockerfile"}"
 DOCKER_TAG="${DOCKER_TAG:-latest}"
 IMAGE_NAME="${IMAGE_NAME:-${DOCKER_REPO}:${DOCKER_TAG}}"
 
