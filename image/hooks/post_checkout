@@ -1,5 +1,7 @@
 set -eua
 
+env | sort && echo
+
 IMAGE_VENDOR="${IMAGE_VENDOR}"
 IMAGE_TITLE="${DOCKER_REPO}"
 IMAGE_VERSION="${DOCKER_TAG}"
