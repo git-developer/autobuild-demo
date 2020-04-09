@@ -12,7 +12,10 @@ IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
 IMAGE_REF_NAME="${SOURCE_BRANCH}"
 
 if ! command -v jq >/dev/null; then
-    >&2 echo 'Ignoring GitHub metadata because of missing required dependency "jq".'
+    apt-get install jq || true
+    if ! command -v jq >/dev/null; then
+        >&2 echo 'Ignoring GitHub metadata because of missing required dependency "jq".'
+    fi
 elif [ -n "${SOURCE_REPOSITORY_URL-}" ]; then
     SOURCE_OWNER_URL="${SOURCE_REPOSITORY_URL%/*}"
     SOURCE_OWNER_NAME="${SOURCE_OWNER_URL##*/}"
