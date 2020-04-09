@@ -1,3 +1,4 @@
+#!/bin/bash
 set -eu
 docker build \
     --file  "${DOCKERFILE_PATH}" \
