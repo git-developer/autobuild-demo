@@ -1,5 +1,6 @@
 set -eu
 docker build \
+    --file  "${DOCKERFILE_PATH}" \
     --tag   "${IMAGE_NAME}" \
     --label "org.opencontainers.image.vendor=${IMAGE_VENDOR}" \
     --label "org.opencontainers.image.title=${IMAGE_TITLE}" \
