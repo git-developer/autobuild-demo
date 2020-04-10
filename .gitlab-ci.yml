@@ -38,7 +38,7 @@ Prepare Build:
 Build:
   stage: build
   variables:
-    - IMAGE_PLATFORMS: "linux/amd64,linux/arm64,linux/arm/v7"
+    IMAGE_PLATFORMS: "linux/amd64,linux/arm64,linux/arm/v7"
   image: "docker:19.03"
   services:
     - name: "docker:19.03-dind"
