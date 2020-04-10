@@ -14,7 +14,7 @@ build:
   before_script:
     - echo 'This is a pre-processing step.'
     - apt-get -q update && apt-get -q install -y wget jq
-    - local gitlab_project_metadata=$(wget -q "${CI_SERVER_URL}/projects/${CI_PROJECT_ID}?license=yes")
+    - gitlab_project_metadata=$(wget -q "${CI_SERVER_URL}/projects/${CI_PROJECT_ID}?license=yes")
     - value_of() { echo "${gitlab_project_metadata}" | jq -r "${1} // empty"; }
     - export IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
     - export IMAGE_LICENSES="$(value_of .license.key)"
@@ -22,7 +22,7 @@ build:
 
   script:
     - echo 'This is the build step.'
-    - local oci='org.opencontainers.image'
+    - oci='org.opencontainers.image'
     - echo docker build \
         --file  "${DOCKERFILE_PATH}" \
         --tag   "${IMAGE_NAME}" \
