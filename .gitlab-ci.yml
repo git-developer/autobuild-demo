@@ -85,7 +85,7 @@ Build and Push with Kaniko:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   before_script:
-    - . image-metadata
+    - . ./image-metadata
     - oci='org.opencontainers.image'
   script:
     - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_REGISTRY_PASSWORD}\"}}}" >/kaniko/.docker/config.json
@@ -117,7 +117,21 @@ Build and Push with buildx:
     - mv buildx ~/.docker/cli-plugins/docker-buildx
     - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
   script:
-    - echo docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
     - docker buildx create --use --name mybuilder
-#    - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --push -t $CI_REGISTRY_IMAGE .
-    - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t $CI_REGISTRY_IMAGE .
+    - docker buildx build \
+        --platform linux/amd64,linux/arm64,linux/arm/v7 \
+        --push \
+        --tag "${CI_REGISTRY_IMAGE}" \
+        --label "${oci}.vendor=${IMAGE_VENDOR}" \
+        --label "${oci}.title=${IMAGE_TITLE}" \
+        --label "${oci}.version=${IMAGE_VERSION}" \
+        ${IMAGE_CREATED:+--label "${oci}.created=${IMAGE_CREATED}"} \
+        ${IMAGE_AUTHORS:+--label "${oci}.authors=${IMAGE_AUTHORS}"} \
+        ${IMAGE_URL:+--label "${oci}.url=${IMAGE_URL}"} \
+        ${IMAGE_DOCUMENTATION:+--label "${oci}.documentation=${IMAGE_DOCUMENTATION}"} \
+        ${IMAGE_REVISION:+--label "${oci}.revision=${IMAGE_REVISION}"} \
+        ${IMAGE_LICENSES:+--label "${oci}.licenses=${IMAGE_LICENSES}"} \
+        ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"} \
+        ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"} \
+        image
