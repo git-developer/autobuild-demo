@@ -1,8 +1,9 @@
 stages:
   - build
-  - push
+  - publish
 
-build:
+build_docker_image:
+  stage: build
   variables:
     DOCKERFILE_PATH: "image/Dockerfile"
     IMAGE_VERSION:   "latest"
@@ -41,6 +42,8 @@ build:
         ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"} \
         ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"} \
         .
-push:
+push_docker_image:
+  stage: publish
   script:
+    - echo "CI_REGISTRY_IMAGE=${CI_REGISTRY_IMAGE}"
     - echo docker push "${IMAGE_NAME}"
