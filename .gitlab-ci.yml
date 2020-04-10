@@ -4,12 +4,11 @@ variables:
 stages:
   - prepare
   - build
-  - publish
-  - build_and_publish
 
-Collect Image Metadata:
+Prepare Build:
   stage: prepare
   variables:
+    BUILDX_VERSION:  "v0.3.1"
     IMAGE_VERSION:   "latest"
     IMAGE_NAME:      "${CI_PROJECT_PATH}:${IMAGE_VERSION}"
     IMAGE_VENDOR:    "${CI_PROJECT_NAMESPACE}"
@@ -28,38 +27,31 @@ Collect Image Metadata:
     - export IMAGE_AUTHORS="${GITLAB_USER_LOGIN}${owner_url:+ <${owner_url}>}"
     - export IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
     - set | grep '^IMAGE_' >image-metadata
+    - wget -q -O buildx "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64"
+    - chmod +x buildx
   artifacts:
     paths:
-    - image-metadata
-    expire_in: "1 week"
-
-Download Multiarch-Builder:
-  stage: prepare
-  artifacts:
-    paths:
+      - image-metadata
       - buildx
     expire_in: "1 hour"
-  script:
-    - wget -q -O buildx "https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64"
-    - chmod +x buildx
 
 Build:
+  stage: build
+  variables:
+    - IMAGE_PLATFORMS: "linux/amd64,linux/arm64,linux/arm/v7"
   image: "docker:19.03"
-  stage: build_and_publish
   services:
     - name: "docker:19.03-dind"
       command: ["--experimental"]
   before_script:
-    - export DOCKER_CLI_EXPERIMENTAL=enabled
     - mkdir -p ~/.docker/cli-plugins
     - mv buildx ~/.docker/cli-plugins/docker-buildx
     - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-  script:
     - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
-    - docker version
-    - docker buildx create --use --name mybuilder
+    - docker buildx create --use --name builder
+  script:
     - docker buildx build >-
-        --platform linux/amd64,linux/arm64,linux/arm/v7
+        --platform "${IMAGE_PLATFORMS}"
         --tag "${CI_REGISTRY_IMAGE}"
         --push
         --label "${oci}.vendor=${IMAGE_VENDOR}"
