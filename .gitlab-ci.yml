@@ -11,8 +11,7 @@ variables:
 build:
   before_script:
     - apt-get -q update && apt-get -q install -y wget jq
-    - echo "${CI_SERVER_URL}/api/v4/projects/${CI_PROJECT_ID}?license=yes"
-    - gitlab_project_metadata="$(wget -q "${CI_SERVER_URL}/api/v4/projects/${CI_PROJECT_ID}?license=yes")"
+    - gitlab_project_metadata="$(wget -q -O - "${CI_SERVER_URL}/api/v4/projects/${CI_PROJECT_ID}?license=yes")"
     - value_of() { echo "${gitlab_project_metadata}" | jq -r "${1} // empty"; }
     - owner_url="$(                 value_of .namespace.web_url)"
     - export IMAGE_LICENSES="$(     value_of .license.key)"
