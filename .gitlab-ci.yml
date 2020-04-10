@@ -1,14 +1,18 @@
-variables:
-  DOCKERFILE_PATH: "image/Dockerfile"
-  IMAGE_VERSION:   "latest"
-  IMAGE_NAME:      "${CI_PROJECT_PATH}:${IMAGE_VERSION}"
-  IMAGE_VENDOR:    "${CI_PROJECT_NAMESPACE}"
-  IMAGE_TITLE:     "${CI_PROJECT_TITLE}"
-  IMAGE_URL:       "${CI_PROJECT_URL}"
-  IMAGE_REVISION:  "${CI_COMMIT_SHA}"
-  IMAGE_REF_NAME:  "${CI_COMMIT_REF_NAME}"
+stages:
+  - build
+  - push
 
 build:
+  variables:
+    DOCKERFILE_PATH: "image/Dockerfile"
+    IMAGE_VERSION:   "latest"
+    IMAGE_NAME:      "${CI_PROJECT_PATH}:${IMAGE_VERSION}"
+    IMAGE_VENDOR:    "${CI_PROJECT_NAMESPACE}"
+    IMAGE_TITLE:     "${CI_PROJECT_TITLE}"
+    IMAGE_URL:       "${CI_REPOSITORY_URL}"
+    IMAGE_REVISION:  "${CI_COMMIT_SHA}"
+    IMAGE_REF_NAME:  "${CI_COMMIT_REF_NAME}"
+
   before_script:
     - apt-get -q update && apt-get -q install -y wget jq
     - gitlab_project_metadata="$(wget -q -O - "${CI_SERVER_URL}/api/v4/projects/${CI_PROJECT_ID}?license=yes")"
@@ -22,7 +26,7 @@ build:
 
   script:
     - oci='org.opencontainers.image'
-    - echo docker build \
+    - docker build \
         --file  "${DOCKERFILE_PATH}" \
         --tag   "${IMAGE_NAME}" \
         --label "${oci}.vendor=${IMAGE_VENDOR}" \
@@ -37,3 +41,6 @@ build:
         ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"} \
         ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"} \
         .
+push:
+  script:
+    - echo docker push "${IMAGE_NAME}"
