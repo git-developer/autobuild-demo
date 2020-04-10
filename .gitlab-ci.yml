@@ -1,6 +1,40 @@
-before_script:
-  - echo 'This is a pre-processing step.'
+variables:
+  IMAGE_VERSION=latest
+  DOCKERFILE_PATH=image/Dockerfile
+  IMAGE_NAME=${CI_PROJECT_NAME}
+  IMAGE_VENDOR=${CI_PROJECT_NAMESPACE}
+  IMAGE_TITLE=${CI_PROJECT_TITLE}
+  IMAGE_AUTHORS="${GITLAB_USER_ID} <${GITLAB_USER_EMAIL}>"
+  IMAGE_URL=${CI_PROJECT_URL}
+  IMAGE_DOCUMENTATION=${IMAGE_URL}#readme
+  IMAGE_REVISION=${CI_COMMIT_SHA}
+  IMAGE_REF_NAME=${CI_COMMIT_REF_NAME}
 
 build:
+  before_script:
+    - echo 'This is a pre-processing step.'
+    - apt-get update && apt-get install wget jq
+    - local gitlab_project_metadata=$(wget -q "${CI_SERVER_URL}/projects/${CI_PROJECT_ID}?license=yes")
+    - value_of() { echo "${gitlab_project_metadata}" | jq -r "${1} // empty"; }
+    - export IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
+    - export IMAGE_LICENSES="$(value_of .license.key)"
+    - export IMAGE_DESCRIPTION="$(value_of .description)"
+
   script:
-    - echo 'This is the build step'
+    - echo 'This is the build step.'
+    - local oci='org.opencontainers.image'
+    - echo docker build \
+        --file  "${DOCKERFILE_PATH}" \
+        --tag   "${IMAGE_NAME}" \
+        --label "${oci}.vendor=${IMAGE_VENDOR}" \
+        --label "${oci}.title=${IMAGE_TITLE}" \
+        --label "${oci}.version=${IMAGE_VERSION}" \
+        ${IMAGE_CREATED:+--label "${oci}.created=${IMAGE_CREATED}"} \
+        ${IMAGE_AUTHORS:+--label "${oci}.authors=${IMAGE_AUTHORS}"} \
+        ${IMAGE_URL:+--label "${oci}.url=${IMAGE_URL}"} \
+        ${IMAGE_DOCUMENTATION:+--label "${oci}.documentation=${IMAGE_DOCUMENTATION}"} \
+        ${IMAGE_REVISION:+--label "${oci}.revision=${IMAGE_REVISION}"} \
+        ${IMAGE_LICENSES:+--label "${oci}.licenses=${IMAGE_LICENSES}"} \
+        ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"} \
+        ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"} \
+        .
