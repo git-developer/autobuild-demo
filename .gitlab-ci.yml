@@ -33,7 +33,7 @@ Collect Image Metadata:
     - image-metadata
     expire_in: "1 week"
 
-.Obtain buildx:
+.Build buildx:
   image: "docker:19.03-git"
   stage: prepare
   variables:
@@ -48,6 +48,16 @@ Collect Image Metadata:
     - export DOCKER_BUILDKIT=1
     - git clone git://github.com/docker/buildx ./docker-buildx
     - docker build --platform=local -o . ./docker-buildx
+
+Download buildx:
+  stage: prepare
+  artifacts:
+    paths:
+      - buildx
+    expire_in: "1 hour"
+  script:
+    - wget -q -O buildx "https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64"
+    - chmod +x buildx
 
 .Build with Docker CLI:
   stage: build
@@ -113,11 +123,12 @@ Build and Push with buildx:
       command: ["--experimental"]
   before_script:
     - export DOCKER_CLI_EXPERIMENTAL=enabled
-#    - mkdir -p ~/.docker/cli-plugins
-#    - mv buildx ~/.docker/cli-plugins/docker-buildx
+    - mkdir -p ~/.docker/cli-plugins
+    - mv buildx ~/.docker/cli-plugins/docker-buildx
     - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
   script:
 #    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
+    - docker version
     - docker buildx create --use --name mybuilder
     - docker buildx build >-
         --platform linux/amd64,linux/arm64,linux/arm/v7
