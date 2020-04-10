@@ -1,3 +1,7 @@
+variables:
+  IMAGE_VERSION:   "latest"
+  IMAGE_NAME:      "${CI_PROJECT_PATH}:${IMAGE_VERSION}"
+
 stages:
   - build
   - publish
@@ -6,8 +10,6 @@ build_docker_image:
   stage: build
   variables:
     DOCKERFILE_PATH: "image/Dockerfile"
-    IMAGE_VERSION:   "latest"
-    IMAGE_NAME:      "${CI_PROJECT_PATH}:${IMAGE_VERSION}"
     IMAGE_VENDOR:    "${CI_PROJECT_NAMESPACE}"
     IMAGE_TITLE:     "${CI_PROJECT_TITLE}"
     IMAGE_URL:       "${CI_REPOSITORY_URL}"
