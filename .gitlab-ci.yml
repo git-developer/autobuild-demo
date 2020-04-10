@@ -5,8 +5,9 @@ variables:
 stages:
   - build
   - publish
+  - build_and_push
 
-build_docker_image:
+docker_build
   stage: build
   variables:
     DOCKERFILE_PATH: "image/Dockerfile"
@@ -15,7 +16,6 @@ build_docker_image:
     IMAGE_URL:       "${CI_REPOSITORY_URL}"
     IMAGE_REVISION:  "${CI_COMMIT_SHA}"
     IMAGE_REF_NAME:  "${CI_COMMIT_REF_NAME}"
-
   before_script:
     - apt-get -q update && apt-get -q install -y wget jq
     - gitlab_project_metadata="$(wget -q -O - "${CI_SERVER_URL}/api/v4/projects/${CI_PROJECT_ID}?license=yes")"
@@ -26,7 +26,6 @@ build_docker_image:
     - export IMAGE_DOCUMENTATION="$(value_of .readme_url)"
     - export IMAGE_AUTHORS="${GITLAB_USER_LOGIN}${owner_url:+ <${owner_url}>}"
     - export IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
-
   script:
     - oci='org.opencontainers.image'
     - echo docker build \
@@ -44,8 +43,51 @@ build_docker_image:
         ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"} \
         ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"} \
         .
+
 push_docker_image:
   stage: publish
   script:
     - echo "CI_REGISTRY_IMAGE=${CI_REGISTRY_IMAGE}"
     - echo docker push "${IMAGE_NAME}"
+
+kaniko_build:
+  stage: build_and_push
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  variables:
+    DOCKERFILE_PATH: "image/Dockerfile"
+    IMAGE_VENDOR:    "${CI_PROJECT_NAMESPACE}"
+    IMAGE_TITLE:     "${CI_PROJECT_TITLE}"
+    IMAGE_URL:       "${CI_REPOSITORY_URL}"
+    IMAGE_REVISION:  "${CI_COMMIT_SHA}"
+    IMAGE_REF_NAME:  "${CI_COMMIT_REF_NAME}"
+  before_script:
+    - apt-get -q update && apt-get -q install -y wget jq
+    - gitlab_project_metadata="$(wget -q -O - "${CI_SERVER_URL}/api/v4/projects/${CI_PROJECT_ID}?license=yes")"
+    - value_of() { echo "${gitlab_project_metadata}" | jq -r "${1} // empty"; }
+    - owner_url="$(                 value_of .namespace.web_url)"
+    - export IMAGE_LICENSES="$(     value_of .license.key)"
+    - export IMAGE_DESCRIPTION="$(  value_of .description)"
+    - export IMAGE_DOCUMENTATION="$(value_of .readme_url)"
+    - export IMAGE_AUTHORS="${GITLAB_USER_LOGIN}${owner_url:+ <${owner_url}>}"
+    - export IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
+  script:
+    - oci='org.opencontainers.image'
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_REGISTRY_PASSWORD}\"}}}" >/kaniko/.docker/config.json
+    - /kaniko/executor \
+        --no-push \
+        --context . \
+        --dockerfile "${CI_PROJECT_DIR}/${DOCKERFILE_PATH}" \
+        --destination "${CI_REGISTRY_IMAGE}:${IMAGE_VERSION}" \
+        --label "${oci}.vendor=${IMAGE_VENDOR}" \
+        --label "${oci}.title=${IMAGE_TITLE}" \
+        --label "${oci}.version=${IMAGE_VERSION}" \
+        ${IMAGE_CREATED:+--label "${oci}.created=${IMAGE_CREATED}"} \
+        ${IMAGE_AUTHORS:+--label "${oci}.authors=${IMAGE_AUTHORS}"} \
+        ${IMAGE_URL:+--label "${oci}.url=${IMAGE_URL}"} \
+        ${IMAGE_DOCUMENTATION:+--label "${oci}.documentation=${IMAGE_DOCUMENTATION}"} \
+        ${IMAGE_REVISION:+--label "${oci}.revision=${IMAGE_REVISION}"} \
+        ${IMAGE_LICENSES:+--label "${oci}.licenses=${IMAGE_LICENSES}"} \
+        ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"} \
+        ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"}
