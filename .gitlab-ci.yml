@@ -27,7 +27,7 @@ build_docker_image:
 
   script:
     - oci='org.opencontainers.image'
-    - docker build \
+    - echo docker build \
         --file  "${DOCKERFILE_PATH}" \
         --tag   "${IMAGE_NAME}" \
         --label "${oci}.vendor=${IMAGE_VENDOR}" \
