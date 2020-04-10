@@ -5,7 +5,7 @@ stages:
   - prepare
   - build
   - publish
-  - build_and_push
+  - build_and_publish
 
 Collect Image Metadata:
   stage: prepare
@@ -32,6 +32,22 @@ Collect Image Metadata:
     paths:
     - image-metadata
     expire_in: 1 week
+
+Obtain buildx:
+  image: docker:19.03-git
+  stage: prepare
+  variables:
+    GIT_STRATEGY: none
+  artifacts:
+    paths:
+      - buildx
+    expire_in: 1 hour
+  services:
+    - docker:19.03-dind
+  script:
+    - export DOCKER_BUILDKIT=1
+    - git clone git://github.com/docker/buildx ./docker-buildx
+    - docker build --platform=local -o . ./docker-buildx
 
 Build with Docker CLI:
   stage: build
@@ -64,7 +80,7 @@ Push to Docker Registry:
     - echo docker push "${IMAGE_NAME}"
 
 Build and Push with Kaniko:
-  stage: build_and_push
+  stage: build_and_publish
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -89,3 +105,19 @@ Build and Push with Kaniko:
         ${IMAGE_LICENSES:+--label "${oci}.licenses=${IMAGE_LICENSES}"} \
         ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"} \
         ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"}
+
+Build and Push with buildx:
+  image: docker:19.03
+  stage: build_and_publish
+  services:
+    - name: docker:19.03-dind
+      command: ["--experimental"]
+  before_script:
+    - mkdir -p ~/.docker/cli-plugins
+    - mv buildx ~/.docker/cli-plugins/docker-buildx
+    - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  script:
+    - echo docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker buildx create --use --name mybuilder
+#    - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --push -t $CI_REGISTRY_IMAGE .
+    - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t $CI_REGISTRY_IMAGE .
