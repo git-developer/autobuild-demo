@@ -27,16 +27,16 @@ Collect Image Metadata:
     - export IMAGE_DOCUMENTATION="$(value_of .readme_url)"
     - export IMAGE_AUTHORS="${GITLAB_USER_LOGIN}${owner_url:+ <${owner_url}>}"
     - export IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
-    - env | grep '^IMAGE_' >/tmp/image-metadata
+    - env | grep '^IMAGE_' >image-metadata
   artifacts:
     paths:
-    - /tmp/image-metadata
+    - image-metadata
     expire_in: 1 week
 
 Build with Docker CLI:
   stage: build
   before_script:
-    - . /tmp/image-metadata
+    - . image-metadata
     - oci='org.opencontainers.image'
   script:
     - echo docker build \
@@ -58,7 +58,7 @@ Build with Docker CLI:
 Push to Docker Registry:
   stage: publish
   before_script:
-    - . /tmp/image-metadata
+    - . image-metadata
   script:
     - echo "CI_REGISTRY_IMAGE=${CI_REGISTRY_IMAGE}"
     - echo docker push "${IMAGE_NAME}"
@@ -69,7 +69,7 @@ Build and Push with Kaniko:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   before_script:
-    - . /tmp/image-metadata
+    - . image-metadata
     - oci='org.opencontainers.image'
   script:
     - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_REGISTRY_PASSWORD}\"}}}" >/kaniko/.docker/config.json
