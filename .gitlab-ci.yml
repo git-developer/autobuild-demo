@@ -33,23 +33,7 @@ Collect Image Metadata:
     - image-metadata
     expire_in: "1 week"
 
-.Build buildx:
-  image: "docker:19.03-git"
-  stage: prepare
-  variables:
-    GIT_STRATEGY: none
-  artifacts:
-    paths:
-      - buildx
-    expire_in: "1 hour"
-  services:
-    - "docker:19.03-dind"
-  script:
-    - export DOCKER_BUILDKIT=1
-    - git clone git://github.com/docker/buildx ./docker-buildx
-    - docker build --platform=local -o . ./docker-buildx
-
-Download buildx:
+Download Multiarch-Builder:
   stage: prepare
   artifacts:
     paths:
@@ -59,63 +43,7 @@ Download buildx:
     - wget -q -O buildx "https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64"
     - chmod +x buildx
 
-.Build with Docker CLI:
-  stage: build
-  before_script:
-    - . image-metadata
-    - oci='org.opencontainers.image'
-  script:
-    - echo docker build >-
-        --file  "${DOCKERFILE_PATH}"
-        --tag   "${IMAGE_NAME}"
-        --label "${oci}.vendor=${IMAGE_VENDOR}"
-        --label "${oci}.title=${IMAGE_TITLE}"
-        --label "${oci}.version=${IMAGE_VERSION}"
-        ${IMAGE_CREATED:+--label "${oci}.created=${IMAGE_CREATED}"}
-        ${IMAGE_AUTHORS:+--label "${oci}.authors=${IMAGE_AUTHORS}"}
-        ${IMAGE_URL:+--label "${oci}.url=${IMAGE_URL}"}
-        ${IMAGE_DOCUMENTATION:+--label "${oci}.documentation=${IMAGE_DOCUMENTATION}"}
-        ${IMAGE_REVISION:+--label "${oci}.revision=${IMAGE_REVISION}"}
-        ${IMAGE_LICENSES:+--label "${oci}.licenses=${IMAGE_LICENSES}"}
-        ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"}
-        ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"}
-        .
-
-.Push to Docker Registry:
-  stage: publish
-  before_script:
-    - . image-metadata
-  script:
-    - echo "CI_REGISTRY_IMAGE=${CI_REGISTRY_IMAGE}"
-    - echo docker push "${IMAGE_NAME}"
-
-.Build and Push with Kaniko:
-  stage: build_and_publish
-  image:
-    name: "gcr.io/kaniko-project/executor:debug"
-    entrypoint: [""]
-  before_script:
-    - . ./image-metadata
-    - oci='org.opencontainers.image'
-  script:
-    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_REGISTRY_PASSWORD}\"}}}" >/kaniko/.docker/config.json
-    - /kaniko/executor >-
-        --context .
-        --dockerfile "${CI_PROJECT_DIR}/${DOCKERFILE_PATH}"
-        --destination "${CI_REGISTRY_IMAGE}:${IMAGE_VERSION}-kaniko"
-        --label "${oci}.vendor=${IMAGE_VENDOR}"
-        --label "${oci}.title=${IMAGE_TITLE}"
-        --label "${oci}.version=${IMAGE_VERSION}"
-        ${IMAGE_CREATED:+--label "${oci}.created=${IMAGE_CREATED}"}
-        ${IMAGE_AUTHORS:+--label "${oci}.authors=${IMAGE_AUTHORS}"}
-        ${IMAGE_URL:+--label "${oci}.url=${IMAGE_URL}"}
-        ${IMAGE_DOCUMENTATION:+--label "${oci}.documentation=${IMAGE_DOCUMENTATION}"}
-        ${IMAGE_REVISION:+--label "${oci}.revision=${IMAGE_REVISION}"}
-        ${IMAGE_LICENSES:+--label "${oci}.licenses=${IMAGE_LICENSES}"}
-        ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"}
-        ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"}
-
-Build and Push with buildx:
+Build:
   image: "docker:19.03"
   stage: build_and_publish
   services:
@@ -127,12 +55,13 @@ Build and Push with buildx:
     - mv buildx ~/.docker/cli-plugins/docker-buildx
     - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
   script:
-#    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
+    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
     - docker version
     - docker buildx create --use --name mybuilder
     - docker buildx build >-
         --platform linux/amd64,linux/arm64,linux/arm/v7
         --tag "${CI_REGISTRY_IMAGE}"
+        --push
         --label "${oci}.vendor=${IMAGE_VENDOR}"
         --label "${oci}.title=${IMAGE_TITLE}"
         --label "${oci}.version=${IMAGE_VERSION}"
