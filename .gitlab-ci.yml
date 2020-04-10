@@ -33,7 +33,7 @@ Collect Image Metadata:
     - image-metadata
     expire_in: "1 week"
 
-Obtain buildx:
+.Obtain buildx:
   image: "docker:19.03-git"
   stage: prepare
   variables:
@@ -49,7 +49,7 @@ Obtain buildx:
     - git clone git://github.com/docker/buildx ./docker-buildx
     - docker build --platform=local -o . ./docker-buildx
 
-Build with Docker CLI:
+.Build with Docker CLI:
   stage: build
   before_script:
     - . image-metadata
@@ -71,7 +71,7 @@ Build with Docker CLI:
         ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"}
         .
 
-Push to Docker Registry:
+.Push to Docker Registry:
   stage: publish
   before_script:
     - . image-metadata
@@ -79,7 +79,7 @@ Push to Docker Registry:
     - echo "CI_REGISTRY_IMAGE=${CI_REGISTRY_IMAGE}"
     - echo docker push "${IMAGE_NAME}"
 
-Build and Push with Kaniko:
+.Build and Push with Kaniko:
   stage: build_and_publish
   image:
     name: "gcr.io/kaniko-project/executor:debug"
@@ -89,12 +89,10 @@ Build and Push with Kaniko:
     - oci='org.opencontainers.image'
   script:
     - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"username\":\"${CI_REGISTRY_USER}\",\"password\":\"${CI_REGISTRY_PASSWORD}\"}}}" >/kaniko/.docker/config.json
-    - /kaniko/executor --help
     - /kaniko/executor >-
         --context .
         --dockerfile "${CI_PROJECT_DIR}/${DOCKERFILE_PATH}"
-        --no-push
-        --destination "${CI_REGISTRY_IMAGE}:${IMAGE_VERSION}"
+        --destination "${CI_REGISTRY_IMAGE}:${IMAGE_VERSION}-kaniko"
         --label "${oci}.vendor=${IMAGE_VENDOR}"
         --label "${oci}.title=${IMAGE_TITLE}"
         --label "${oci}.version=${IMAGE_VERSION}"
@@ -114,15 +112,15 @@ Build and Push with buildx:
     - name: "docker:19.03-dind"
       command: ["--experimental"]
   before_script:
-    - mkdir -p ~/.docker/cli-plugins
-    - mv buildx ~/.docker/cli-plugins/docker-buildx
+    - export DOCKER_CLI_EXPERIMENTAL=enabled
+#    - mkdir -p ~/.docker/cli-plugins
+#    - mv buildx ~/.docker/cli-plugins/docker-buildx
     - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
   script:
-    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
+#    - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
     - docker buildx create --use --name mybuilder
     - docker buildx build >-
         --platform linux/amd64,linux/arm64,linux/arm/v7
-        --push
         --tag "${CI_REGISTRY_IMAGE}"
         --label "${oci}.vendor=${IMAGE_VENDOR}"
         --label "${oci}.title=${IMAGE_TITLE}"
