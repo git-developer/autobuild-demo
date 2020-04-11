@@ -47,11 +47,13 @@ Collect Image Metadata:
   chmod +x /usr/bin/docker-credential-pass
   apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing gnupg pass
   passphrase=${GPG_PASSHRASE:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)}
+  echo Before gpg
   cat <<EOF | gpg --batch --gen-key
   Key-Type: 1
   Name-Real: gpg-user
   Passphrase: ${passphrase}
   EOF
+  echo After gpg
   gpg --list-keys gpg-user | grep -o '^\s\(.*\)' | tr -d ' ' | xargs pass init
   echo 'pass is initialized' | pass insert -e docker-credential-helpers/docker-pass-initialized-check
   echo ${passphrase} | gpg --passphrase-fd 0 --pinentry-mode loopback -d ~/.password-store/docker-credential-helpers/docker-pass-initialized-check.gpg
