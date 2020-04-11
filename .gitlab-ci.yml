@@ -55,7 +55,8 @@ Multiarch Build:
     - set -eu
     - . ./image-metadata
     - *configure_multiarch_builder
-    - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
+    - echo "{\"credsStore\":\"pass\"}" >~/.docker/config.json
+    - docker login
   script:
     - oci='org.opencontainers.image'
     - docker buildx build >-
