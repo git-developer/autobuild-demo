@@ -50,7 +50,7 @@ Collect Image Metadata:
   cat <<EOF | gpg --batch --gen-key
   Key-Type: 1
   Name-Real: gpg-user
-  Passphrase: ${GPG_PASSHRASE}
+  Passphrase: ${GPG_PASSPHRASE}
   EOF
   echo After gpg
   gpg --list-keys gpg-user | grep -o '^\s\(.*\)' | tr -d ' ' | xargs pass init
@@ -71,7 +71,7 @@ Multiarch Build:
   services:
     - name: "docker:${DOCKER_TAG}-dind"
   before_script:
-    - set -eu
+    - set -euo pipefail
     - . ./image-metadata
     - export GPG_PASSPHRASE=${GPG_PASSHRASE:-"$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"}
     - *configure_multiarch_builder
