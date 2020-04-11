@@ -7,8 +7,9 @@ stages:
   - prepare
   - build
 
-Collect Metadata:
+Collect Image Metadata:
   stage: prepare
+  image: busybox
   variables:
     IMAGE_NAME:      "${CI_PROJECT_PATH}:${IMAGE_VERSION}"
     IMAGE_VENDOR:    "${CI_PROJECT_NAMESPACE}"
@@ -16,9 +17,10 @@ Collect Metadata:
     IMAGE_URL:       "${CI_PROJECT_URL}"
     IMAGE_REVISION:  "${CI_COMMIT_SHA}"
     IMAGE_REF_NAME:  "${CI_COMMIT_REF_NAME}"
+    JQ_VERSION:      "1.6"
   before_script:
-    - apt-get -q update
-    - apt-get -q install -y wget jq
+    - wget -q -O /usr/bin/jq "https://github.com/stedolan/jq/releases/download/jq-${JQ_VERSION}/jq-linux64"
+    - chmod +x /usr/bin/jq
   script:
     - gitlab_project_metadata="$(wget -q -O - "${CI_SERVER_URL}/api/v4/projects/${CI_PROJECT_ID}?license=yes")"
     - value_of() { echo "${gitlab_project_metadata}" | jq -r "${1} // empty"; }
@@ -41,7 +43,7 @@ Collect Metadata:
   docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
   docker buildx create --use --name builder
 
-Build:
+Multiarch Build:
   stage: build
   variables:
     DOCKER_TAG:     "19.03"
