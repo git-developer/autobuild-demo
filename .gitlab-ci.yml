@@ -37,23 +37,25 @@ Collect Image Metadata:
 
 .build:.before_script:.configure_multiarch_builder: &configure_multiarch_builder |
   docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-  docker buildx create --help
+  mkdir -p ~/.docker/cli-plugins
+  wget -q -O ~/.docker/cli-plugins/docker-buildx "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64"
+  chmod +x ~/.docker/cli-plugins/docker-buildx
   docker buildx create --use --name builder
 
 Multiarch Build:
   stage: build
   variables:
-    DOCKER_TAG:     "test"
+    DOCKER_TAG:     "19.03.8"
+    BUILDX_VERSION: "v0.3.1"
     DOCKER_CLI_EXPERIMENTAL: "enabled"
   image: "docker:${DOCKER_TAG}"
   services:
     - name: "docker:${DOCKER_TAG}-dind"
-      command: ["--experimental"]
   before_script:
     - set -eu
-    - docker version
     - . ./image-metadata
     - *configure_multiarch_builder
+    - docker version
     - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
   script:
     - oci='org.opencontainers.image'
