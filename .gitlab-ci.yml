@@ -55,6 +55,7 @@ Multiarch Build:
     - set -eu
     - . ./image-metadata
     - *configure_multiarch_builder
+    - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
   script:
     - oci='org.opencontainers.image'
     - docker buildx build >-
@@ -73,3 +74,5 @@ Multiarch Build:
         ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"}
         ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"}
         "${BUILD_CONTEXT}"
+  after_script:
+    - docker logout
