@@ -46,15 +46,15 @@ Collect Image Metadata:
   wget -q -O - "https://github.com/docker/docker-credential-helpers/releases/download/${DOCKER_CREDENTIAL_PASS_VERSION}/docker-credential-pass-${DOCKER_CREDENTIAL_PASS_VERSION}-amd64.tar.gz" | tar -C /usr/bin -xz
   chmod +x /usr/bin/docker-credential-pass
   apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing gnupg pass
-  export GPG_TTY=$(tty)
-  echo "GPG_TTY=${GPG_TTY}"
+  passphrase=${GPG_PASSHRASE:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)}
   cat <<EOF | gpg --batch --gen-key
   Key-Type: 1
   Name-Real: gpg-user
-  Passphrase: "${GPG_PASSHRASE:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)}"
+  Passphrase: ${passphrase}
   EOF
   gpg --list-keys gpg-user | grep -o '^\s\(.*\)' | tr -d ' ' | xargs pass init
   echo 'pass is initialized' | pass insert -e docker-credential-helpers/docker-pass-initialized-check
+  echo ${passphrase} | gpg --passphrase-fd 0 --pinentry-mode loopback -d ~/.password-store/docker-credential-helpers/docker-pass-initialized-check.gpg
   mkdir -p ~/.docker
   echo "{\"credsStore\":\"pass\"}" >~/.docker/config.json
   echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
