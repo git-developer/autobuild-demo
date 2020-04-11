@@ -7,7 +7,7 @@ stages:
   - prepare
   - build
 
-.prepare_collect_metadata: &prepare_collect_metadata |-
+.prepare:.collect_metadata: &collect_metadata |
   - gitlab_project_metadata="$(wget -q -O - "${CI_SERVER_URL}/api/v4/projects/${CI_PROJECT_ID}?license=yes")"
   - value_of() { echo "${gitlab_project_metadata}" | jq -r "${1} // empty"; }
   - owner_url="$(                 value_of .namespace.web_url)"
@@ -18,11 +18,11 @@ stages:
   - export IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
   - set | grep '^IMAGE_' >image-metadata
 
-.prepare_download_buildx: &prepare_download_buildx |-
+.prepare:.download_builder: &download_builder |
   - wget -q -O buildx "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64"
   - chmod +x buildx
 
-.build_configure_builder: &build_configure_builder |-
+.build:.configure_builder: &configure_builder |
   - command -v wget
   - command -v apt-get
   - mkdir -p ~/.docker/cli-plugins
@@ -44,8 +44,8 @@ Prepare Build:
     - apt-get -q update
     - apt-get -q install -y wget jq
   script:
-    - *prepare_collect_metadata
-    - *prepare_download_buildx
+    - *collect_metadata
+    - *download_builder
   artifacts:
     paths:
       - image-metadata
@@ -61,7 +61,7 @@ Build:
     - name: "docker:${DOCKER_TAG}-dind"
       command: ["--experimental"]
   before_script:
-    - *build_configure_builder
+    - *configure_builder
     - . ./image-metadata
     - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
   script:
