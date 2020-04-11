@@ -72,6 +72,7 @@ Multiarch Build:
     - . ./image-metadata
     - *configure_multiarch_builder
     - *configure_docker_auth_config
+    - pass show docker-credential-helpers/docker-pass-initialized-check
   script:
     - oci='org.opencontainers.image'
     - docker buildx build >-
