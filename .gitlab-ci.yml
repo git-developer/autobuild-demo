@@ -43,6 +43,7 @@ Collect Image Metadata:
   docker buildx create --use --name builder
 
 .build:.before_script:.configure_docker_auth_config: &configure_docker_auth_config |
+  export GPG_PASSPHRASE="${GPG_PASSPHRASE:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9!#%&*+,-./:;<=>?@^_~;' | fold -w 64 | head -n 1)}"
   wget -q -O - "https://github.com/docker/docker-credential-helpers/releases/download/${DOCKER_CREDENTIAL_PASS_VERSION}/docker-credential-pass-${DOCKER_CREDENTIAL_PASS_VERSION}-amd64.tar.gz" | tar -C /usr/bin -xz
   chmod +x /usr/bin/docker-credential-pass
   apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing gnupg pass bash
@@ -72,7 +73,6 @@ Multiarch Build:
     - set -euo pipefail
     - . ./image-metadata
     - *configure_multiarch_builder
-    - export GPG_PASSPHRASE="${GPG_PASSPHRASE:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9!#%&*+,-./:;<=>?@^_~;' | fold -w 64 | head -n 1)}"
     - *configure_docker_auth_config
     - apk add bash && bash -c '<<<"${CI_REGISTRY_PASSWORD}" docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
   script:
