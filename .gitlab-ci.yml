@@ -7,6 +7,29 @@ stages:
   - prepare
   - build
 
+.prepare_collect_metadata: &prepare_collect_metadata |-
+  - gitlab_project_metadata="$(wget -q -O - "${CI_SERVER_URL}/api/v4/projects/${CI_PROJECT_ID}?license=yes")"
+  - value_of() { echo "${gitlab_project_metadata}" | jq -r "${1} // empty"; }
+  - owner_url="$(                 value_of .namespace.web_url)"
+  - export IMAGE_LICENSES="$(     value_of .license.key)"
+  - export IMAGE_DESCRIPTION="$(  value_of .description)"
+  - export IMAGE_DOCUMENTATION="$(value_of .readme_url)"
+  - export IMAGE_AUTHORS="${GITLAB_USER_LOGIN}${owner_url:+ <${owner_url}>}"
+  - export IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
+  - set | grep '^IMAGE_' >image-metadata
+
+.prepare_download_buildx: &prepare_download_buildx |-
+  - wget -q -O buildx "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64"
+  - chmod +x buildx
+
+.build_configure_builder: &build_configure_builder |-
+  - command -v wget
+  - command -v apt-get
+  - mkdir -p ~/.docker/cli-plugins
+  - mv buildx ~/.docker/cli-plugins/docker-buildx
+  - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  - docker buildx create --use --name builder
+
 Prepare Build:
   stage: prepare
   variables:
@@ -17,19 +40,12 @@ Prepare Build:
     IMAGE_URL:       "${CI_PROJECT_URL}"
     IMAGE_REVISION:  "${CI_COMMIT_SHA}"
     IMAGE_REF_NAME:  "${CI_COMMIT_REF_NAME}"
+  before_script:
+    - apt-get -q update
+    - apt-get -q install -y wget jq
   script:
-    - apt-get -q update && apt-get -q install -y wget jq
-    - gitlab_project_metadata="$(wget -q -O - "${CI_SERVER_URL}/api/v4/projects/${CI_PROJECT_ID}?license=yes")"
-    - value_of() { echo "${gitlab_project_metadata}" | jq -r "${1} // empty"; }
-    - owner_url="$(                 value_of .namespace.web_url)"
-    - export IMAGE_LICENSES="$(     value_of .license.key)"
-    - export IMAGE_DESCRIPTION="$(  value_of .description)"
-    - export IMAGE_DOCUMENTATION="$(value_of .readme_url)"
-    - export IMAGE_AUTHORS="${GITLAB_USER_LOGIN}${owner_url:+ <${owner_url}>}"
-    - export IMAGE_CREATED="$(date -u --rfc-3339 seconds)"
-    - set | grep '^IMAGE_' >image-metadata
-    - wget -q -O buildx "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64"
-    - chmod +x buildx
+    - *prepare_collect_metadata
+    - *prepare_download_buildx
   artifacts:
     paths:
       - image-metadata
@@ -45,11 +61,8 @@ Build:
     - name: "docker:${DOCKER_TAG}-dind"
       command: ["--experimental"]
   before_script:
-    - mkdir -p ~/.docker/cli-plugins
-    - mv buildx ~/.docker/cli-plugins/docker-buildx
-    - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-    - docker buildx create --use --name builder
-    - . image-metadata
+    - *build_configure_builder
+    - . ./image-metadata
     - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
   script:
     - oci='org.opencontainers.image'
@@ -69,5 +82,5 @@ Build:
         ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"}
         ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"}
         "${BUILD_CONTEXT}"
-  - after_script:
+  after_script:
     - docker logout
