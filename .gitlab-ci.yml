@@ -18,9 +18,9 @@ Collect Image Metadata:
     IMAGE_REVISION:  "${CI_COMMIT_SHA}"
     IMAGE_REF_NAME:  "${CI_COMMIT_REF_NAME}"
   before_script:
+    - set -euo pipefail
     - apk add coreutils wget jq
   script:
-    - set -eu
     - gitlab_project_metadata="$(wget -q -O - "${CI_SERVER_URL}/api/v4/projects/${CI_PROJECT_ID}?license=yes")"
     - value_of() { echo "${gitlab_project_metadata}" | jq -r "${1} // empty"; }
     - owner_url="$(                 value_of .namespace.web_url)"
@@ -37,7 +37,8 @@ Collect Image Metadata:
 
 .build:.before_script:.configure_multiarch_builder: &configure_multiarch_builder |
   mkdir -p ~/.docker/cli-plugins
-  wget -q -O ~/.docker/cli-plugins/docker-buildx "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64"
+  version="${BUILDX_VERSION:-latest}"
+  wget -q -O ~/.docker/cli-plugins/docker-buildx "https://github.com/docker/buildx/releases/download/${version}/buildx-${version}.linux-amd64"
   chmod +x ~/.docker/cli-plugins/docker-buildx
   docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
   docker buildx create --use --name builder
@@ -45,13 +46,13 @@ Collect Image Metadata:
 Multiarch Build:
   stage: build
   variables:
-    DOCKER_TAG:     "19.03"
-    BUILDX_VERSION: "v0.3.1"
+    DOCKER_TAG:     "test"
   image: "docker:${DOCKER_TAG}"
   services:
     - name: "docker:${DOCKER_TAG}-dind"
       command: ["--experimental"]
   before_script:
+    - set -eu
     - . ./image-metadata
     - *configure_multiarch_builder
     - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
