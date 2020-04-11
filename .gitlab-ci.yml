@@ -55,6 +55,7 @@ Multiarch Build:
     - set -eu
     - . ./image-metadata
     - *configure_multiarch_builder
+    - echo "{\"credsStore\":\"secret-service\"}" >~/.docker/config.json
   script:
     - oci='org.opencontainers.image'
     - docker buildx build >-
