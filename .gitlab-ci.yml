@@ -36,10 +36,9 @@ Collect Image Metadata:
     expire_in: "1 hour"
 
 .build:.before_script:.configure_multiarch_builder: &configure_multiarch_builder |
-  mkdir -p ~/.docker/cli-plugins
-  version="${BUILDX_VERSION:-latest}"
-  wget -q -O ~/.docker/cli-plugins/docker-buildx "https://github.com/docker/buildx/releases/download/${version}/buildx-${version}.linux-amd64"
-  chmod +x ~/.docker/cli-plugins/docker-buildx
+#  mkdir -p ~/.docker/cli-plugins
+#  wget -q -O ~/.docker/cli-plugins/docker-buildx "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64"
+#  chmod +x ~/.docker/cli-plugins/docker-buildx
   docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
   docker buildx create --use --name builder
 
@@ -47,6 +46,7 @@ Multiarch Build:
   stage: build
   variables:
     DOCKER_TAG:     "test"
+#    BUILDX_VERSION: "v0.3.1"
   image: "docker:${DOCKER_TAG}"
   services:
     - name: "docker:${DOCKER_TAG}-dind"
