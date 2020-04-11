@@ -72,7 +72,7 @@ Multiarch Build:
     - set -euo pipefail
     - . ./image-metadata
     - *configure_multiarch_builder
-    - GPG_PASSPHRASE="${GPG_PASSPHRASE:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9!#%&*+,-./:;<=>?@^_~;' | fold -w 64 | head -n 1)}"
+    - export GPG_PASSPHRASE="${GPG_PASSPHRASE:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9!#%&*+,-./:;<=>?@^_~;' | fold -w 64 | head -n 1)}"
     - *configure_docker_auth_config
     - apk add bash && bash -c '<<<"${CI_REGISTRY_PASSWORD}" docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
   script:
