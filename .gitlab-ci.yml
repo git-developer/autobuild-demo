@@ -74,6 +74,7 @@ Multiarch Build:
     - *configure_multiarch_builder
     - export GPG_PASSPHRASE="${GPG_PASSPHRASE:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9!#%&*+,-./:;<=>?@^_~;' | fold -w 64 | head -n 1)}"
     - *configure_docker_auth_config
+    - apk add bash && bash -c '<<<"${CI_REGISTRY_PASSWORD}" docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
   script:
     - oci='org.opencontainers.image'
     - docker buildx build >-
@@ -92,3 +93,5 @@ Multiarch Build:
         ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"}
         ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"}
         "${BUILD_CONTEXT}"
+  after_script:
+    - docker logout
