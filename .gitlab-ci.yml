@@ -47,6 +47,7 @@ Collect Image Metadata:
   chmod +x /usr/bin/docker-credential-pass
   apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing gnupg pass
   export GPG_TTY=$(tty)
+  echo "GPG_TTY=${GPG_TTY}"
   cat <<EOF | gpg --batch --gen-key
   Key-Type: 1
   Name-Real: gpg-user
