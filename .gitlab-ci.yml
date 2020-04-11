@@ -43,6 +43,7 @@ Multiarch Build:
   stage: build
   variables:
     DOCKER_TAG:     "test"
+    DOCKER_CLI_EXPERIMENTAL: "enabled"
   image: "docker:${DOCKER_TAG}"
   services:
     - name: "docker:${DOCKER_TAG}-dind"
