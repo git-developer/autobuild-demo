@@ -55,7 +55,9 @@ Multiarch Build:
     - set -eu
     - . ./image-metadata
     - *configure_multiarch_builder
-    - echo "{\"credsStore\":\"secret-service\"}" >~/.docker/config.json
+    - wget -q https://github.com/docker/docker-credential-helpers/releases/download/v0.6.3/docker-credential-pass-v0.6.3-amd64.tar.gz | tar -C /usr/bin -xz
+    - chmod +x /usr/bin/docker-credential-pass
+    - echo "{\"credsStore\":\"pass\"}" >~/.docker/config.json
   script:
     - oci='org.opencontainers.image'
     - docker buildx build >-
