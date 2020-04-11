@@ -52,6 +52,7 @@ Collect Image Metadata:
   Passphrase: "${GPG_PASSHRASE:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)}"
   EOF
   gpg --list-keys gpg-user | grep -o '^\s\(.*\)' | tr -d ' ' | xargs pass init
+  echo 'pass is initialized' | pass insert -e docker-credential-helpers/docker-pass-initialized-check
   mkdir -p ~/.docker
   echo "{\"credsStore\":\"pass\"}" >~/.docker/config.json
   echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
