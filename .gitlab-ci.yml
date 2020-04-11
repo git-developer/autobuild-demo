@@ -44,8 +44,8 @@ Prepare Build:
     - apt-get -q update
     - apt-get -q install -y wget jq
   script:
-    - *collect_metadata
-    - *download_builder
+    *collect_metadata
+    *download_builder
   artifacts:
     paths:
       - image-metadata
@@ -61,7 +61,7 @@ Build:
     - name: "docker:${DOCKER_TAG}-dind"
       command: ["--experimental"]
   before_script:
-    - *configure_builder
+    *configure_builder
     - . ./image-metadata
     - docker login -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}" "${CI_REGISTRY}"
   script:
