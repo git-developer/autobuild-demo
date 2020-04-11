@@ -52,10 +52,10 @@ Collect Image Metadata:
   Name-Real: docker-credential-pass
   Passphrase: ${GPG_PASSPHRASE}
   EOF
-  bash -c '<<<"${GPG_PASSPHRASE}" gpg --passphrase-fd 0 --pinentry-mode loopback -d ~/.password-store/docker-credential-helpers/docker-pass-initialized-check.gpg'
-  unset GPG_PASSPHRASE
   gpg --list-keys docker-credential-pass | grep -o '^\s\(.*\)' | tr -d ' ' | xargs pass init
   echo 'pass is initialized' | pass insert -e docker-credential-helpers/docker-pass-initialized-check
+  bash -c '<<<"${GPG_PASSPHRASE}" gpg --passphrase-fd 0 --pinentry-mode loopback -d ~/.password-store/docker-credential-helpers/docker-pass-initialized-check.gpg'
+  unset GPG_PASSPHRASE
   mkdir -p ~/.docker
   echo "{\"credsStore\":\"pass\"}" >~/.docker/config.json
 
