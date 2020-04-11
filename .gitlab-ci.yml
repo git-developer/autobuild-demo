@@ -46,16 +46,14 @@ Collect Image Metadata:
   wget -q -O - "https://github.com/docker/docker-credential-helpers/releases/download/${DOCKER_CREDENTIAL_PASS_VERSION}/docker-credential-pass-${DOCKER_CREDENTIAL_PASS_VERSION}-amd64.tar.gz" | tar -C /usr/bin -xz
   chmod +x /usr/bin/docker-credential-pass
   apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing gnupg pass
-  echo Before gpg
   cat <<EOF | gpg --batch --gen-key
   Key-Type: 1
-  Name-Real: gpg-user
+  Name-Real: docker-credential-pass
   Passphrase: ${GPG_PASSPHRASE}
   EOF
-  echo After gpg
-  gpg --list-keys gpg-user | grep -o '^\s\(.*\)' | tr -d ' ' | xargs pass init
+  gpg --list-keys docker-credential-pass | grep -o '^\s\(.*\)' | tr -d ' ' | xargs pass init
   echo 'pass is initialized' | pass insert -e docker-credential-helpers/docker-pass-initialized-check
-  echo ${GPG_PASSPHRASE} | gpg --passphrase-fd 0 --pinentry-mode loopback -d ~/.password-store/docker-credential-helpers/docker-pass-initialized-check.gpg
+  echo "${GPG_PASSPHRASE}" | gpg --passphrase-fd 0 --pinentry-mode loopback -d ~/.password-store/docker-credential-helpers/docker-pass-initialized-check.gpg
   mkdir -p ~/.docker
   echo "{\"credsStore\":\"pass\"}" >~/.docker/config.json
   echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
@@ -73,10 +71,9 @@ Multiarch Build:
   before_script:
     - set -euo pipefail
     - . ./image-metadata
-    - export GPG_PASSPHRASE=${GPG_PASSPHRASE:-"$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"}
+    - export GPG_PASSPHRASE="${GPG_PASSPHRASE:-$(cat /dev/urandom | tr -dc 'a-zA-Z0-9!#%&*+,-./:;<=>?@^_~;' | fold -w 64 | head -n 1)}"
     - *configure_multiarch_builder
     - *configure_docker_auth_config
-    - pass show docker-credential-helpers/docker-pass-initialized-check
   script:
     - oci='org.opencontainers.image'
     - docker buildx build >-
