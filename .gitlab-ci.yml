@@ -55,7 +55,7 @@ Collect Image Metadata:
   echo After gpg
   gpg --list-keys gpg-user | grep -o '^\s\(.*\)' | tr -d ' ' | xargs pass init
   echo 'pass is initialized' | pass insert -e docker-credential-helpers/docker-pass-initialized-check
-  echo ${GPG_PASSHRASE} | gpg --passphrase-fd 0 --pinentry-mode loopback -d ~/.password-store/docker-credential-helpers/docker-pass-initialized-check.gpg
+  echo ${GPG_PASSPHRASE} | gpg --passphrase-fd 0 --pinentry-mode loopback -d ~/.password-store/docker-credential-helpers/docker-pass-initialized-check.gpg
   mkdir -p ~/.docker
   echo "{\"credsStore\":\"pass\"}" >~/.docker/config.json
   echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
@@ -73,7 +73,7 @@ Multiarch Build:
   before_script:
     - set -euo pipefail
     - . ./image-metadata
-    - export GPG_PASSPHRASE=${GPG_PASSHRASE:-"$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"}
+    - export GPG_PASSPHRASE=${GPG_PASSPHRASE:-"$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"}
     - *configure_multiarch_builder
     - *configure_docker_auth_config
     - pass show docker-credential-helpers/docker-pass-initialized-check
