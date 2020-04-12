@@ -71,7 +71,6 @@ Multiarch Build:
     DOCKER_TAG:     "19.03.8"
     BUILDX_VERSION: "v0.3.1"
     DOCKER_CREDENTIAL_PASS_VERSION: "v0.6.3"
-    DOCKER_CREDENTIAL_HELPER: "pass"
     DOCKER_CLI_EXPERIMENTAL: "enabled"
   image: "docker:${DOCKER_TAG}"
   services:
@@ -81,12 +80,7 @@ Multiarch Build:
     - apk add bash
     - . ./image-metadata
     - *configure_multiarch_builder
-    - if [ "${DOCKER_CREDENTIAL_HELPER}" = 'pass' ]; then
-      *configure_docker_auth_pass
-      fi
-    - if [ "${DOCKER_CREDENTIAL_HELPER}" = 'env'  ]; then
-      *configure_docker_auth_env
-      fi
+    - *configure_docker_auth_pass
     - bash -c '<<<"${CI_REGISTRY_PASSWORD}" docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
   script:
     - oci='org.opencontainers.image'
