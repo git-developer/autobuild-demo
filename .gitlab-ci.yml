@@ -42,7 +42,7 @@ Collect Image Metadata:
   chmod +x ~/.docker/cli-plugins/docker-buildx
   docker buildx create --use --name builder
 
-.build:.before_script:.configure_docker_auth_config: &configure_docker_auth_config |
+.build:.before_script:.configure_docker_auth_pass: &configure_docker_auth_pass |
   wget -q -O - "https://github.com/docker/docker-credential-helpers/releases/download/${DOCKER_CREDENTIAL_PASS_VERSION}/docker-credential-pass-${DOCKER_CREDENTIAL_PASS_VERSION}-amd64.tar.gz" | tar -C /usr/bin -xz
   chmod +x /usr/bin/docker-credential-pass
   apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/edge/testing gnupg pass bash
@@ -59,6 +59,11 @@ Collect Image Metadata:
   mkdir -p ~/.docker
   echo "{\"credsStore\":\"pass\"}" >~/.docker/config.json
 
+.build:.before_script:.configure_docker_auth_env: &configure_docker_auth_env |
+  wget -q -O - "https://github.com/git-developer/docker-support/tarball/develop" | tar --one-top-level=/usr/bin/ --strip-components 2 --wildcards -xz '*/docker-credential-env/docker-credential-env'
+  mkdir -p ~/.docker
+  echo "{\"credsStore\":\"env\"}" >~/.docker/config.json
+
 Multiarch Build:
   stage: build
   variables:
@@ -71,10 +76,11 @@ Multiarch Build:
     - name: "docker:${DOCKER_TAG}-dind"
   before_script:
     - set -euo pipefail
+    - apk add bash
     - . ./image-metadata
     - *configure_multiarch_builder
-    - *configure_docker_auth_config
-    - apk add bash && bash -c '<<<"${CI_REGISTRY_PASSWORD}" docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
+    - *configure_docker_auth_env
+    - bash -c '<<<"${CI_REGISTRY_PASSWORD}" docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
   script:
     - oci='org.opencontainers.image'
     - docker buildx build >-
