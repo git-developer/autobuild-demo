@@ -60,6 +60,7 @@ Collect Image Metadata:
   echo "{\"credsStore\":\"pass\"}" >~/.docker/config.json
 
 .build:.before_script:.configure_docker_auth_env: &configure_docker_auth_env |
+  apk add tar
   wget -q -O - "https://github.com/git-developer/docker-support/tarball/develop" | tar --one-top-level=/usr/bin/ --strip-components 2 --wildcards -xz '*/docker-credential-env/docker-credential-env'
   mkdir -p ~/.docker
   echo "{\"credsStore\":\"env\"}" >~/.docker/config.json
