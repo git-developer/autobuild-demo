@@ -81,7 +81,8 @@ Multiarch Build:
     - apk add bash
     - . ./image-metadata
     - *configure_multiarch_builder
-    - *configure_docker_auth_${DOCKER_CREDENTIAL_HELPER}
+    - if [ "${DOCKER_CREDENTIAL_HELPER}" = 'pass' ]; then *configure_docker_auth_pass ; fi
+    - if [ "${DOCKER_CREDENTIAL_HELPER}" = 'env'  ]; then *configure_docker_auth_env  ; fi
     - bash -c '<<<"${CI_REGISTRY_PASSWORD}" docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
   script:
     - oci='org.opencontainers.image'
