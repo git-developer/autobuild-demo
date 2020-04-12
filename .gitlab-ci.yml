@@ -72,6 +72,7 @@ Multiarch Build:
     BUILDX_VERSION: "v0.3.1"
     DOCKER_CREDENTIAL_PASS_VERSION: "v0.6.3"
     DOCKER_CLI_EXPERIMENTAL: "enabled"
+    DOCKER_CREDENTIAL_HELPER: "pass"
   image: "docker:${DOCKER_TAG}"
   services:
     - name: "docker:${DOCKER_TAG}-dind"
@@ -80,7 +81,8 @@ Multiarch Build:
     - apk add bash
     - . ./image-metadata
     - *configure_multiarch_builder
-    - *configure_docker_auth_env
+    - *configure_docker_auth_${DOCKER_CREDENTIAL_HELPER}
+    - bash -c '<<<"${CI_REGISTRY_PASSWORD}" docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"'
   script:
     - oci='org.opencontainers.image'
     - docker buildx build >-
@@ -99,3 +101,5 @@ Multiarch Build:
         ${IMAGE_REF_NAME:+--label "${oci}.ref.name=${IMAGE_REF_NAME}"}
         ${IMAGE_DESCRIPTION:+--label "${oci}.description=${IMAGE_DESCRIPTION}"}
         "${BUILD_CONTEXT}"
+  after_script:
+    - docker logout
