@@ -1,10 +1,9 @@
 variables:
-  DOCKER_SUPPORT_TAG: develop
   BUILD_CONTEXT:      image
   IMAGE_PLATFORMS:    linux/amd64,linux/arm/v7
 
 include:
-  remote: "https://github.com/git-developer/docker-support/raw/${DOCKER_SUPPORT_TAG}/gitlab-ci/docker-support.yml"
+  remote: "https://github.com/git-developer/docker-support/raw/develop/gitlab-ci/docker-support.yml"
 
 Build Container Image:
   extends: .docker_support:.build_image
