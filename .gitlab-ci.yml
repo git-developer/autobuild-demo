@@ -2,12 +2,7 @@ include:
   remote: 'https://github.com/git-developer/docker-support/raw/develop/gitlab-ci/docker-support.yml'
 
 stages:
-  - prepare
   - build
-
-Collect Metadata:
-  extends: .docker_support:.collect_image_metadata
-  stage: prepare
 
 Build:
   extends: .docker_support:.build_image
