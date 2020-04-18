@@ -18,17 +18,24 @@ Collect Labels:
   extends: .docker_support:.collect_labels
   stage: prepare
 
+Build Image:
+  extends: .docker_support:.build_bare_image
+  stage: prepare
+
 Collect Additional Tags:
+  extends: .docker_support:.base
   stage: analyze
-  image: "alpine"
   dependencies:
   - Collect Tags
+  - Build Image
   artifacts:
     paths:
     - tags
   script:
   - echo >tags/demo "${CI_PROJECT_PATH}:demo"
+  - docker run --rm "${CI_PROJECT_PATH}:${BUILD_CACHE}" sh -c 'busybox | head -1 | cut -d " " -f 2'
+  - echo >tags/version "${CI_PROJECT_PATH}:$(docker run --rm "${CI_PROJECT_PATH}:${BUILD_CACHE}" sh -c 'busybox | head -1 | cut -d " " -f 2')"
 
 Build Container Image:
-  extends: .docker_support:.build_full_image
+  extends: .docker_support:.publish_image
   stage: build
