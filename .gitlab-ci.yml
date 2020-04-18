@@ -10,10 +10,6 @@ stages:
   - analyze
   - build
 
-Prepare Container Image:
-  extends: .docker_support:.build_bare_image
-  stage: prepare
-
 Collect Tags:
   extends: .docker_support:.collect_tags
   stage: prepare
