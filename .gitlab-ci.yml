@@ -24,13 +24,14 @@ Collect Labels:
 
 Collect Additional Tags:
   stage: analyze
+  image: "alpine"
   dependencies:
   - Collect Tags
   artifacts:
     paths:
     - tags
   script:
-  - echo >tags "${CI_PROJECT_PATH}:demo"
+  - echo >tags/demo "${CI_PROJECT_PATH}:demo"
 
 Build Container Image:
   extends: .docker_support:.build_full_image
