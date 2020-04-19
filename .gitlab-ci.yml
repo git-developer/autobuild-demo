@@ -23,7 +23,7 @@ Build Image:
   stage: prepare
 
 Collect Additional Tags:
-  extends: .docker_support:.base
+  extends: .docker_support:.with_bare_image
   stage: analyze
   dependencies:
   - Collect Tags
