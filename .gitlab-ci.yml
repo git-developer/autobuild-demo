@@ -5,6 +5,7 @@ include:
   remote: "https://github.com/git-developer/docker-support/raw/develop/gitlab-ci/docker-template.yml"
 
 stages:
+  - setup
   - prepare
   - analyze
   - publish
