@@ -20,5 +20,5 @@ Collect Additional Tags:
     paths:
     - tags
   script:
-  - echo >tags/demo "${CI_PROJECT_PATH}:demo"
-  - echo >tags/version "${CI_PROJECT_PATH}:busybox-$(docker run --rm "${CI_PROJECT_PATH}:${BUILD_CACHE}" sh -c 'busybox | head -1 | cut -d " " -f 2')"
+  - echo >tags/demo "${IMAGE_NAME}:demo"
+  - echo >tags/version "${IMAGE_NAME}:busybox-$(docker run --rm "${IMAGE_NAME}:${BUILD_CACHE}" sh -c 'busybox | head -1 | cut -d " " -f 2')"
