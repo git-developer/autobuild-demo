@@ -22,7 +22,3 @@ Collect Additional Tags:
   script:
   - echo >tags/demo "${IMAGE_NAME}:demo"
   - echo >tags/version "${IMAGE_NAME}:busybox-$(docker run --rm "${IMAGE_NAME}:${BUILD_CACHE}" sh -c 'busybox | head -1 | cut -d " " -f 2')"
-  - echo GITLAB_USER_EMAIL=$GITLAB_USER_EMAIL
-  - echo GITLAB_USER_ID=$GITLAB_USER_ID
-  - echo GITLAB_USER_LOGIN=$GITLAB_USER_LOGIN
-  - echo GITLAB_USER_NAME=$GITLAB_USER_NAME
