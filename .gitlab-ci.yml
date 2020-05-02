@@ -4,7 +4,7 @@ variables:
 include:
   remote: "https://github.com/git-developer/docker-support/raw/feature/gitlab-ci/gitlab-ci/docker-template.yml"
 
-.Collect Additional Tags:
+Collect Additional Tags:
   extends: .docker_support:.with_bare_image
   stage: analyze
   dependencies:
